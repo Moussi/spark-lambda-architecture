@@ -1,13 +1,14 @@
 package batch
 
 import config.Settings
-import org.apache.spark.{SparkConf, SparkContext}
 import domain._
+import org.apache.spark.sql.SQLContext
+import org.apache.spark.{SparkConf, SparkContext}
 
 /**
   * Created by moussi on 24/02/18.
   */
-object RDDBatchJob {
+object DataFramesBatchJob {
   def main(args: Array[String]): Unit = {
 
     /**
@@ -21,6 +22,10 @@ object RDDBatchJob {
       * instantiate Spark Context
       */
     val sc = new SparkContext(conf)
+    /**
+      * In order use Data frames we need to add spark sql context
+      */
+    val sqlContext= new SQLContext(sc)
 
     val filePath = wlc.filePath
 
@@ -59,6 +64,8 @@ object RDDBatchJob {
       .reduceByKey((a, b) => (a._1 + b._1, a._2 + b._2, a._3 + b._3))
 
     println("********* visitorsByProduct ***********")
-    activityByProduct.foreach(println);
+    visitorsByProduct.foreach(println)
+    println("********* activityByProduct ***********")
+    activityByProduct.foreach(println)
   }
 }
