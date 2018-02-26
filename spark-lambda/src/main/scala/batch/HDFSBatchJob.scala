@@ -16,7 +16,7 @@ object HDFSBatchJob {
       * get Spark configuration
       * set cluster manager we are you using local
       */
-    val conf = new SparkConf().setAppName("Lambda with spark").setMaster("local[*]")
+    val conf = new SparkConf().setAppName("Lambda with spark")
 
     /**
       * instantiate Spark Context
@@ -78,7 +78,7 @@ object HDFSBatchJob {
     /**
       * with partitionby spark will create each directory for each timestamp line
       */
-    activityByProduct.write.partitionBy("timestamp_hour").mode(SaveMode.Append).parquet("hdfs://lambda-pluralsight:9000/lambda/batch1")
+    activityByProduct.write.partitionBy("timestamp_hour").mode(SaveMode.Append).parquet("hdfs://localhost:9000/lambda/batch1")
 
     /**
       * Now we need to make a fat jar an run this fat in jar in yarn using spark-submit
@@ -89,6 +89,9 @@ object HDFSBatchJob {
       * ./spark-submit --master yarn --deploy-mode cluster --class batch.HDFSBatchJob /folder
       *
       * /folder : folder where fat jar is located
+      *
+      * if our deployment is successful we will be able to explore saved files on hdfs
+      * hdfs dfs -ls /lambda/batch1
       */
   }
 }
