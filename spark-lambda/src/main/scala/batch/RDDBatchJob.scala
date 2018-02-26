@@ -6,6 +6,7 @@ import domain._
 
 /**
   * Created by moussi on 24/02/18.
+  * Job Using Local files and running on local cluster
   */
 object RDDBatchJob {
   def main(args: Array[String]): Unit = {

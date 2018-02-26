@@ -1,16 +1,15 @@
 package batch
 
-import config.Settings
 import domain._
-import org.apache.spark.sql.SQLContext
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.{SQLContext, SaveMode}
 import org.apache.spark.{SparkConf, SparkContext}
 
 /**
-  * Created by moussi on 24/02/18.
-  *   * Job Using Local files and running on local cluster
+  * Created by moussi on 25/02/18.
+  * Job to Be executed on YARN using spark-submit
   */
-object DataFramesBatchJob {
+object HDFSBatchJob {
   def main(args: Array[String]): Unit = {
 
     /**
@@ -18,7 +17,6 @@ object DataFramesBatchJob {
       * set cluster manager we are you using local
       */
     val conf = new SparkConf().setAppName("Lambda with spark").setMaster("local[*]")
-    val wlc = Settings.WebLogGen
 
     /**
       * instantiate Spark Context
@@ -30,7 +28,7 @@ object DataFramesBatchJob {
     val sqlContext= new SQLContext(sc)
     import sqlContext.implicits._
 
-    val filePath = wlc.filePath
+    val filePath = "file:///vagrant/data.tsv"
 
     /**
       * Create RDD from data.tsv file that we genrated with LogProducer class
@@ -78,20 +76,19 @@ object DataFramesBatchJob {
     activityByProduct.registerTempTable("activityProduct")
 
     /**
-      * Define a custom function via sqlContext and used with you sql statement
-      *
+      * with partitionby spark will create each directory for each timestamp line
       */
+    activityByProduct.write.partitionBy("timestamp_hour").mode(SaveMode.Append).parquet("hdfs://lambda-pluralsight:9000/lambda/batch1")
 
-    sqlContext.udf.register("UnderExposed", (pageViewCount: Long, purshaseCount: Long) => if (purshaseCount == 0) 0 else pageViewCount/purshaseCount)
-    val underExposedProducts = sqlContext.sql("""SELECT
-                                            product,
-                                            timestamp_hour,
-                                            UnderExposed(page_view_count, purchase_count) as negative_exposure
-                                            from activityProduct
-                                            ORDER BY negative_exposure
-                                            LIMIT 5 """)
-    underExposedProducts.printSchema()
-    underExposedProducts.foreach(println)
-
+    /**
+      * Now we need to make a fat jar an run this fat in jar in yarn using spark-submit
+      * mvn clean package
+      * copy fat jar into shared folder with VM machine
+      * connect ssh to VM
+      * and run spark-submit command to run our job in yarn executor
+      * ./spark-submit --master yarn --deploy-mode cluster --class batch.HDFSBatchJob /folder
+      *
+      * /folder : folder where fat jar is located
+      */
   }
 }
