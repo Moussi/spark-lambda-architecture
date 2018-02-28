@@ -68,7 +68,7 @@ object LogProducer extends App{
 
     val fileOutput = FileUtils.getFile(s"{$destPath}data_$timestamp")
     println(s"moving produced data to $fileOutput")
-    val file = FileUtils.moveFile(FileUtils.getFile(filePath), fileOutput)
+    FileUtils.moveFile(FileUtils.getFile(filePath), fileOutput)
     val sleeping = 5000
     Thread sleep sleeping
     println(s"sleeping $sleeping")
