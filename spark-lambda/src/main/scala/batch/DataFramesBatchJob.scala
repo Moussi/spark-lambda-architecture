@@ -2,9 +2,8 @@ package batch
 
 import config.Settings
 import domain._
-import org.apache.spark.sql.SQLContext
 import org.apache.spark.sql.functions._
-import org.apache.spark.{SparkConf, SparkContext}
+import utils.SparkUtils._
 
 /**
   * Created by moussi on 24/02/18.
@@ -14,22 +13,16 @@ object DataFramesBatchJob {
   def main(args: Array[String]): Unit = {
 
     /**
-      * get Spark configuration
-      * set cluster manager we are you using local
-      */
-    val conf = new SparkConf().setAppName("Lambda with spark").setMaster("local[*]")
-    val wlc = Settings.WebLogGen
-
-    /**
       * instantiate Spark Context
       */
-    val sc = new SparkContext(conf)
+    val sc = getSparkContext("Lambda with spark DataFrames", true)
+
     /**
       * In order use Data frames we need to add spark sql context
       */
-    val sqlContext= new SQLContext(sc)
+    val sqlContext= getSparkCqlContext(sc)
     import sqlContext.implicits._
-
+    val wlc = Settings.WebLogGen
     val filePath = wlc.filePath
 
     /**

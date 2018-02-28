@@ -1,9 +1,9 @@
 package batch
 
 import domain._
+import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{SQLContext, SaveMode}
-import org.apache.spark.{SparkConf, SparkContext}
+import utils.SparkUtils._
 
 /**
   * Created by moussi on 25/02/18.
@@ -15,17 +15,13 @@ object HDFSBatchJob {
     /**
       * get Spark configuration
       * set cluster manager we are you using local
-      */
-    val conf = new SparkConf().setAppName("Lambda with spark")
-
-    /**
       * instantiate Spark Context
       */
-    val sc = new SparkContext(conf)
+    val sc = getSparkContext("Lambda App Hdfs", false)
     /**
       * In order use Data frames we need to add spark sql context
       */
-    val sqlContext= new SQLContext(sc)
+    val sqlContext= getSparkCqlContext(sc)
     import sqlContext.implicits._
 
     val filePath = "file:///vagrant/data.tsv"
