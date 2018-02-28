@@ -7,7 +7,7 @@ import utils.SparkUtils._
 
 /**
   * Created by moussi on 24/02/18.
-  *   * Job Using Local files and running on local cluster
+  *   * Job Using DataFrames and running on local cluster
   */
 object DataFramesBatchJob {
   def main(args: Array[String]): Unit = {
@@ -15,14 +15,14 @@ object DataFramesBatchJob {
     /**
       * instantiate Spark Context
       */
-    val sc = getSparkContext("Lambda with spark DataFrames", true)
+    val sc = getSparkContext("Lambda with spark DataFrames")
 
     /**
       * In order use Data frames we need to add spark sql context
       */
     val sqlContext= getSparkCqlContext(sc)
     import sqlContext.implicits._
-    val wlc = Settings.WebLogGen
+    val wlc = Settings.Configuration
     val filePath = wlc.filePath
 
     /**

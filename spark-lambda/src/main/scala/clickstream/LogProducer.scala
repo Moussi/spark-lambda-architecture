@@ -3,6 +3,7 @@ package clickstream
 import java.io.FileWriter
 
 import config.Settings
+import org.apache.commons.io.FileUtils
 
 import scala.util.Random
 
@@ -13,27 +14,30 @@ import scala.util.Random
   * your main executable
   */
 object LogProducer extends App{
-  // WebLog config
-  val wlc = Settings.WebLogGen
+
+  // Load config
+  val config = Settings.Configuration
 
   val Products = scala.io.Source.fromInputStream(getClass.getResourceAsStream("/products.csv")).getLines().toArray
   val Referrers = scala.io.Source.fromInputStream(getClass.getResourceAsStream("/referrers.csv")).getLines().toArray
-  val Visitors = (0 to wlc.visitors).map("Visitor-" + _)
-  val Pages = (0 to wlc.pages).map("Page-" + _)
+  val Visitors = (0 to config.visitors).map("Visitor-" + _)
+  val Pages = (0 to config.pages).map("Page-" + _)
 
   val rnd = new Random()
-  val filePath = wlc.filePath
+  val filePath = config.filePath
+  val destPath = config.destPath
 
-  val fw = new FileWriter(filePath, true)
+  for (fileCount <- 1 to config.filesNumber) {
+    val fw = new FileWriter(filePath, true)
 
-  // introduce some randomness to time increments for demo purposes
-  val incrementTimeEvery = rnd.nextInt(wlc.records - 1) + 1
+    // introduce some randomness to time increments for demo purposes
+    val incrementTimeEvery = rnd.nextInt(config.records - 1) + 1
 
-  var timestamp = System.currentTimeMillis()
-  var adjustedTimestamp = timestamp
+    var timestamp = System.currentTimeMillis()
+    var adjustedTimestamp = timestamp
 
-    for (iteration <- 1 to wlc.records) {
-      adjustedTimestamp = adjustedTimestamp + ((System.currentTimeMillis() - timestamp) * wlc.timeMultiplier)
+    for (iteration <- 1 to config.records) {
+      adjustedTimestamp = adjustedTimestamp + ((System.currentTimeMillis() - timestamp) * config.timeMultiplier)
       timestamp = System.currentTimeMillis() // move all this to a function
       val action = iteration % (rnd.nextInt(200) + 1) match {
         case 0 => "purchase"
@@ -61,4 +65,12 @@ object LogProducer extends App{
 
     }
     fw.close()
+
+    val fileOutput = FileUtils.getFile(s"{$destPath}data_$timestamp")
+    println(s"moving produced data to $fileOutput")
+    val file = FileUtils.moveFile(FileUtils.getFile(filePath), fileOutput)
+    val sleeping = 5000
+    Thread sleep sleeping
+    println(s"sleeping $sleeping")
+  }
 }

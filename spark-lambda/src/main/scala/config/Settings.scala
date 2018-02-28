@@ -13,17 +13,20 @@ object Settings {
     */
   private val conf = ConfigFactory.load()
 
-  object WebLogGen {
-    private val webLogGen = conf.getConfig("clickstream")
+  object Configuration {
+    private val config = conf.getConfig("commons")
 
     /**
       * the reason I'm using lazy vals here is that I don't want Scala to evaluate the value of these properties immediately.
         I only want it to evaluate the value of the parameter when it gets used.
       */
-    lazy val records = webLogGen.getInt("records")
-    lazy val timeMultiplier = webLogGen.getInt("time_multiplier")
-    lazy val pages = webLogGen.getInt("pages")
-    lazy val visitors = webLogGen.getInt("visitors")
-    lazy val filePath = webLogGen.getString("file_path")
+    lazy val records = config.getInt("records")
+    lazy val timeMultiplier = config.getInt("time_multiplier")
+    lazy val pages = config.getInt("pages")
+    lazy val visitors = config.getInt("visitors")
+    lazy val filePath = config.getString("file_path")
+    lazy val destPath = config.getString("dest_path")
+    lazy val local_deploy_mode = config.getBoolean("local_deploy_mode")
+    lazy val filesNumber = config.getInt("number_of_files")
   }
 }

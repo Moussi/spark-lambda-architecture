@@ -1,5 +1,6 @@
 package utils
 
+import config.Settings
 import org.apache.spark.sql.SQLContext
 import org.apache.spark.{SparkConf, SparkContext}
 
@@ -8,15 +9,16 @@ import org.apache.spark.{SparkConf, SparkContext}
   */
 object SparkUtils {
 
+  val config = Settings.Configuration
 
-  def getSparkContext(appName:String, local: Boolean) : SparkContext = {
+  def getSparkContext(appName:String) : SparkContext = {
     /**
       * get Spark configuration
       * set cluster manager we are you using local
       */
     val conf = new SparkConf().setAppName("Lambda with spark")
     var checkPointDirectory = "hdfs://lambda-pluralsight:9000/spark/checkpoint"
-    if(local) {
+    if (config.local_deploy_mode) {
       conf.setMaster("local[*]")
       checkPointDirectory = "file:///home/moussi/Desktop/Projects/LamdaArchitecture/Boxes/spark-kafka-cassandra-applying-lambda-architecture/vagrant/lambda"
     }

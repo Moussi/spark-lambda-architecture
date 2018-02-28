@@ -17,7 +17,7 @@ object HDFSBatchJob {
       * set cluster manager we are you using local
       * instantiate Spark Context
       */
-    val sc = getSparkContext("Lambda App Hdfs", false)
+    val sc = getSparkContext("Lambda App Hdfs")
     /**
       * In order use Data frames we need to add spark sql context
       */

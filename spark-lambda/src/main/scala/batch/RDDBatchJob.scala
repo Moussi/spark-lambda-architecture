@@ -14,11 +14,11 @@ object RDDBatchJob {
     /**
       * instantiate Spark Context
       */
-    val sc = getSparkContext("Lambda with spark", true)
+    val sc = getSparkContext("Lambda with spark")
 
-    val wlc = Settings.WebLogGen
+    val configuration = Settings.Configuration
 
-    val filePath = wlc.filePath
+    val filePath = configuration.filePath
 
     /**
       * Create RDD from data.tsv file that we genrated with LogProducer class
