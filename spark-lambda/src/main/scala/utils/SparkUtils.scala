@@ -2,7 +2,9 @@ package utils
 
 import config.Settings
 import org.apache.spark.sql.SQLContext
+import org.apache.spark.streaming.{Duration, StreamingContext}
 import org.apache.spark.{SparkConf, SparkContext}
+
 
 /**
   * Created by moussi on 28/02/18.
@@ -11,7 +13,10 @@ object SparkUtils {
 
   val config = Settings.Configuration
 
-  def getSparkContext(appName:String) : SparkContext = {
+  /**
+    * return SparkContexts
+    */
+  def getSparkContext(appName: String) = {
     /**
       * get Spark configuration
       * set cluster manager we are you using local
@@ -31,9 +36,26 @@ object SparkUtils {
     sc
   }
 
-  def getSparkCqlContext(sc: SparkContext) : SQLContext = {
-    val sqlContext= SQLContext.getOrCreate(sc)
+  /**
+    * return SparkSqlContext
+    */
+  def getSparkCqlContext(sc: SparkContext) = {
+    val sqlContext = SQLContext.getOrCreate(sc)
     sqlContext
+  }
+
+  /**
+    * returns SparkStreaming
+    */
+  def getSparkStreamingContext(appStreaming: (SparkContext, Duration) => StreamingContext,
+                               sc: SparkContext, microBatchingDuration: Duration) = {
+    val creatingFunc = () => appStreaming(sc, microBatchingDuration)
+    val ssc = sc.getCheckpointDir match {
+      case Some(checkPointDirectory) => StreamingContext.getActiveOrCreate(checkPointDirectory, creatingFunc, sc.hadoopConfiguration, createOnError = false)
+      case None => StreamingContext.getActiveOrCreate(creatingFunc)
+    }
+    sc.getCheckpointDir.foreach(cp => ssc.checkpoint(cp))
+    ssc
   }
 
 }
