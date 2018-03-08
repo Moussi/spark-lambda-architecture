@@ -1,6 +1,7 @@
 package streaming
 
 import config.Settings
+import domain._
 import org.apache.spark.SparkContext
 import org.apache.spark.streaming.{Duration, Seconds, StreamingContext}
 import utils.SparkUtils._
@@ -25,6 +26,8 @@ object StreamingJob {
       * load Streaming Spark Context
       */
     val sc = getSparkContext("Lambda App with Streaming")
+    val sqlContext = getSparkCqlContext(sc)
+    import sqlContext.implicits._
     /**
       * Create Spark Streaming Context
       */
@@ -45,7 +48,32 @@ object StreamingJob {
       /**
         * print streamed file
         */
-      textDstream.print()
+      val activityDStream = textDstream.transform(rdd =>
+        rdd.flatMap { line =>
+          buildActivityFromLine(line)
+        }
+      )
+
+      activityDStream.transform(rdd => {
+        val df = rdd.toDF
+        df.registerTempTable("activity")
+        val activityByProduct = sqlContext.sql(
+          """SELECT
+                                            product,
+                                            timestamp_hour,
+                                            sum(case when action = 'purchase' then 1 else 0 end) as purchase_count,
+                                            sum(case when action = 'add_to_cart' then 1 else 0 end) as add_to_cart_count,
+                                            sum(case when action = 'page_view' then 1 else 0 end) as page_view_count
+                                            from activity
+                                            group by product, timestamp_hour """).cache()
+
+        activityByProduct.registerTempTable("activityProduct")
+        activityByProduct.map { rdd =>
+          ((rdd.getString(0), rdd.getLong(1)),
+            ActivityByProduct(rdd.getString(0), rdd.getLong(1), rdd.getLong(1), rdd.getLong(1), rdd.getLong(1)))
+        }
+      }).print()
+
       ssc
     }
 

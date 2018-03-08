@@ -12,6 +12,13 @@ package object domain {
                       inputProps: Map[String, String] = Map()
                      )
 
+  case class ActivityByProduct(
+                      product: String,
+                      timestamp_hour: Long,
+                      purchaseCount: Long,
+                      addToCardCount: Long,
+                      pageViewCount: Long
+                     )
   /**
     * static method like in java
     * @param line
