@@ -31,3 +31,18 @@ transformations like updateStateByKey and mapWithState, require this.
 Now you can checkpoint RDDs on your own, but simply using these transformations
 and enabling checkpointing on the StreamingContext as we've done already and essentially
 takes care of all we need to enable both metadata and data checkpointing alike. 
+
+## Stateful Transformations
+
+The Stateful Transformations responds to the question around our ability to maintain some state throughout
+the entire application's life based on data received from a DStream. 
+And Spark also provides means of maintaining state using either the `updateStateByKey` or `mapWithState` functions. 
+
+We can think of a stateful transformation in Spark as some sort of global bag of information or global state 
+that you have available to you to store information on the side. In reality, it's a distributed bag of
+information so the physical implementation isn't restricted to what one machine can handle. 
+
+This bag of information contains the global state that you want to track and has a type. 
+
+A major difference between using statement transformations and a reduce or aggregation function, for example, 
+is that the state can have a completely different type than the data it receives. 
