@@ -10,7 +10,7 @@ import utils.SparkUtils._
 /**
   * Created by moussi on 28/02/18.
   */
-object StreamingJob {
+object AdvancedStreamingJob {
 
   /**
     * Define MicroBatching period
@@ -31,7 +31,7 @@ object StreamingJob {
     /**
       * Create Spark Streaming Context
       */
-    def streamingApp(sc: SparkContext, microBatchDuration: Duration) : StreamingContext= {
+    def streamingApp(sc: SparkContext, microBatchDuration: Duration): StreamingContext = {
       val ssc = new StreamingContext(sc, microBatchDuration)
       /**
         * define input path in case of local or cluster deployment
@@ -42,7 +42,7 @@ object StreamingJob {
       }
 
       /**
-        *  monitor a single directory from new files and then consume the data from that file
+        * monitor a single directory from new files and then consume the data from that file
         */
       val textDstream = ssc.textFileStream(inputPath)
       /**
@@ -54,7 +54,7 @@ object StreamingJob {
         }
       )
 
-      activityDStream.transform(rdd => {
+      val statefullActivityByProduct = activityDStream.transform(rdd => {
         val df = rdd.toDF
         df.registerTempTable("activity")
         val activityByProduct = sqlContext.sql(
@@ -72,7 +72,9 @@ object StreamingJob {
           ((r.getString(0), r.getLong(1)),
             ActivityByProduct(r.getString(0), r.getLong(1), r.getLong(2), r.getLong(3), r.getLong(4)))
         }
-      }).print()
+      }).updateStateByKey((newItemByKey: Seq[ActivityByProduct],
+                           currentState: Option[(Long, Long, Long, Long)])
+      => updateActivityByProductState(newItemByKey, currentState))
 
       ssc
     }
@@ -83,5 +85,30 @@ object StreamingJob {
       */
     ssc.start()
     ssc.awaitTermination()
+  }
+
+  private def updateActivityByProductState(newItemByKey: Seq[ActivityByProduct], currentState: Option[(Long, Long, Long, Long)]) = {
+
+
+    var (previousTimeStamp, purchase_count, add_to_cart_count, page_view_count) = currentState.getOrElse(System.currentTimeMillis(), 0L, 0L, 0L)
+
+    var result: Option[(Long, Long, Long, Long)] = null
+
+    if (newItemByKey.isEmpty) {
+      if (System.currentTimeMillis() - previousTimeStamp > 30000 + 4000) {
+        result = None
+      } else {
+        result = Some((previousTimeStamp, purchase_count, add_to_cart_count, page_view_count))
+      }
+    } else {
+      newItemByKey.foreach(a => {
+        purchase_count += a.purchaseCount
+        add_to_cart_count += a.addToCardCount
+        page_view_count += a.pageViewCount
+      })
+      result = Some((System.currentTimeMillis(), purchase_count, add_to_cart_count, page_view_count))
+    }
+    result
+
   }
 }
