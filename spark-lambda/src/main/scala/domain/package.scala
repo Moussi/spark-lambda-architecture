@@ -34,4 +34,29 @@ package object domain {
       None
   }
 
+  def updateActivityByProductState(newItemByKey: Seq[ActivityByProduct], currentState: Option[(Long, Long, Long, Long)]) = {
+
+
+    var (previousTimeStamp, purchase_count, add_to_cart_count, page_view_count) = currentState.getOrElse(System.currentTimeMillis(), 0L, 0L, 0L)
+
+    var result: Option[(Long, Long, Long, Long)] = null
+
+    if (newItemByKey.isEmpty) {
+      if (System.currentTimeMillis() - previousTimeStamp > 30000 + 4000) {
+        result = None
+      } else {
+        result = Some((previousTimeStamp, purchase_count, add_to_cart_count, page_view_count))
+      }
+    } else {
+      newItemByKey.foreach(a => {
+        purchase_count += a.purchaseCount
+        add_to_cart_count += a.addToCardCount
+        page_view_count += a.pageViewCount
+      })
+      result = Some((System.currentTimeMillis(), purchase_count, add_to_cart_count, page_view_count))
+    }
+
+    result
+  }
+
 }

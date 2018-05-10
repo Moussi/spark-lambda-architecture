@@ -5,12 +5,13 @@ import domain._
 import org.apache.spark.SparkContext
 import org.apache.spark.streaming.{Duration, Seconds, StreamingContext}
 import utils.SparkUtils._
+import _root_.config.Settings.Configuration.local_deploy_mode
 
 
 /**
   * Created by moussi on 28/02/18.
   */
-object AdvancedStreamingJob {
+object AdvancedStreamingJobUpdateStateByKey {
 
   /**
     * Define MicroBatching period
@@ -36,7 +37,7 @@ object AdvancedStreamingJob {
       /**
         * define input path in case of local or cluster deployment
         */
-      val inputPath = settings.local_deploy_mode match {
+      val inputPath = local_deploy_mode match {
         case true => "file:///home/moussi/Desktop/Projects/LamdaArchitecture/Boxes/spark-kafka-cassandra-applying-lambda-architecture/vagrant/input"
         case false => "file:///vagrant/input"
       }
@@ -76,6 +77,7 @@ object AdvancedStreamingJob {
                            currentState: Option[(Long, Long, Long, Long)])
       => updateActivityByProductState(newItemByKey, currentState))
 
+      statefullActivityByProduct.print(10)
       ssc
     }
 
