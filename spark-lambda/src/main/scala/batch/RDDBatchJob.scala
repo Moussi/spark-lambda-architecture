@@ -1,7 +1,7 @@
 package batch
 
 import config.Settings
-import domain._
+import functions._
 import utils.SparkUtils._
 
 /**

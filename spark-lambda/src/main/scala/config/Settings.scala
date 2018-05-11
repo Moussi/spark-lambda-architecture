@@ -14,19 +14,29 @@ object Settings {
   private val conf = ConfigFactory.load()
 
   object Configuration {
-    private val config = conf.getConfig("commons")
+    private val commonsConfig = conf.getConfig("commons")
+    private val kafkaConfig = conf.getConfig("kafka")
 
     /**
       * the reason I'm using lazy vals here is that I don't want Scala to evaluate the value of these properties immediately.
         I only want it to evaluate the value of the parameter when it gets used.
       */
-    lazy val records = config.getInt("records")
-    lazy val timeMultiplier = config.getInt("time_multiplier")
-    lazy val pages = config.getInt("pages")
-    lazy val visitors = config.getInt("visitors")
-    lazy val filePath = config.getString("file_path")
-    lazy val destPath = config.getString("dest_path")
-    lazy val local_deploy_mode = config.getBoolean("local_deploy_mode")
-    lazy val filesNumber = config.getInt("number_of_files")
+    lazy val records = commonsConfig.getInt("records")
+    lazy val timeMultiplier = commonsConfig.getInt("time_multiplier")
+    lazy val pages = commonsConfig.getInt("pages")
+    lazy val visitors = commonsConfig.getInt("visitors")
+    lazy val filePath = commonsConfig.getString("file_path")
+    lazy val destPath = commonsConfig.getString("dest_path")
+    lazy val local_deploy_mode = commonsConfig.getBoolean("local_deploy_mode")
+    lazy val filesNumber = commonsConfig.getInt("number_of_files")
+    /**
+      * Kafka Configuration
+      */
+    lazy val weblogTopic = kafkaConfig.getString("kafka_weblog_topic")
+    lazy val kafkaHosts = kafkaConfig.getString("kafka_hosts")
+    lazy val keyStringSerializer = kafkaConfig.getString("kafka_key_serializer")
+    lazy val valueStringSerializer = kafkaConfig.getString("kafka_value_serializer")
+    lazy val kafkaProducerAcks = kafkaConfig.getString("kafka_producer_acks")
+    lazy val kafkaProducerClientId = kafkaConfig.getString("kafka_producer_client_id")
   }
 }

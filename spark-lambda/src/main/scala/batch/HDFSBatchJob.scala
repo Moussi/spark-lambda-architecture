@@ -1,6 +1,6 @@
 package batch
 
-import domain._
+import functions._
 import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.functions._
 import utils.SparkUtils._
