@@ -2,6 +2,7 @@ package streaming
 
 import config.Settings
 import domain._
+import functions._
 import org.apache.spark.SparkContext
 import org.apache.spark.streaming.{Duration, Seconds, StreamingContext}
 import utils.SparkUtils._

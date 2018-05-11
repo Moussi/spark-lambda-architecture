@@ -1,18 +1,18 @@
 package streaming
 
+import com.twitter.algebird.HyperLogLogMonoid
 import config.Settings
 import domain._
 import functions._
 import org.apache.spark.SparkContext
-import org.apache.spark.streaming.{Duration, Seconds, StreamingContext}
+import org.apache.spark.streaming._
 import utils.SparkUtils._
-import _root_.config.Settings.Configuration.local_deploy_mode
 
 
 /**
   * Created by moussi on 28/02/18.
   */
-object AdvancedStreamingJobUpdateStateByKey {
+object AdvancedStreamingHLL {
 
   /**
     * Define MicroBatching period
@@ -38,9 +38,10 @@ object AdvancedStreamingJobUpdateStateByKey {
       /**
         * define input path in case of local or cluster deployment
         */
-      val inputPath = local_deploy_mode match {
-        case true => "file:///home/moussi/Desktop/Projects/LamdaArchitecture/Boxes/spark-kafka-cassandra-applying-lambda-architecture/vagrant/input"
-        case false => "file:///vagrant/input"
+      val inputPath = if (settings.local_deploy_mode) {
+        "file:///home/moussi/Desktop/Projects/LamdaArchitecture/Boxes/spark-kafka-cassandra-applying-lambda-architecture/vagrant/input"
+      } else {
+        "file:///vagrant/input"
       }
 
       /**
@@ -55,6 +56,9 @@ object AdvancedStreamingJobUpdateStateByKey {
           buildActivityFromLine(line)
         }
       )
+
+      val activityStateSpec = StateSpec.function(mapActivityStateFunc)
+        .timeout(Seconds(30L))
 
       val statefullActivityByProduct = activityDStream.transform(rdd => {
         val df = rdd.toDF
@@ -74,13 +78,47 @@ object AdvancedStreamingJobUpdateStateByKey {
           ((r.getString(0), r.getLong(1)),
             ActivityByProduct(r.getString(0), r.getLong(1), r.getLong(2), r.getLong(3), r.getLong(4)))
         }
-      }).updateStateByKey((newItemByKey: Seq[ActivityByProduct],
-                           currentState: Option[(Long, Long, Long, Long)])
-      => updateActivityByProductState(newItemByKey, currentState))
+      }).mapWithState(activityStateSpec)
 
-      statefullActivityByProduct.print(10)
+      val activityByProdcutStateSnapshot = statefullActivityByProduct.stateSnapshots();
+      activityByProdcutStateSnapshot.
+
+        /** reduceByKeyAndWindow is used here to avoid iterating the hole state
+          * (a,b) a the current state, b the old state
+          * (x,y) x the current state, y the old state (reverse function of reduceByKeyAndWindow)
+          */
+        reduceByKeyAndWindow((a, b) => b,
+        (x, y) => x,
+        Seconds(30 / 4 * 4))
+        .foreachRDD(rdd =>
+          rdd.map(ac => ActivityByProduct(ac._1._1, ac._1._2, ac._2._1, ac._2._2, ac._2._3))
+            .toDF().registerTempTable("activityByProduct"))
+
+      // unique visitors by product
+      val visitorsByProductSpec = StateSpec.function(mapVisitorsStateFunc)
+        .timeout(Minutes(120))
+      val hll = new HyperLogLogMonoid(12)
+
+      val statefulVisitorsByProduct = activityDStream.map(
+        a => ((a.product, a.timestamp_hour), hll(a.visitor.getBytes())))
+        .mapWithState(visitorsByProductSpec)
+      val visitorsByProdcutStateSnapshot = statefulVisitorsByProduct.stateSnapshots();
+      visitorsByProdcutStateSnapshot.
+
+        /** reduceByKeyAndWindow is used here to avoid iterating the hole state
+          * (a,b) a the current state, b the old state
+          * (x,y) x the current state, y the old state (reverse function of reduceByKeyAndWindow)
+          */
+        reduceByKeyAndWindow((a, b) => b,
+                             (x, y) => x,
+                              Seconds(30 / 4 * 4))
+        .foreachRDD(rdd =>
+          rdd.map(vp => VisitorsByProduct(vp._1._1, vp._1._2, vp._2.approximateSize.estimate))
+            .toDF().registerTempTable("visitorsByProduct"))
+
       ssc
     }
+
 
     val ssc = getSparkStreamingContext(streamingApp, sc, microBatchDuration)
     /**
@@ -88,30 +126,5 @@ object AdvancedStreamingJobUpdateStateByKey {
       */
     ssc.start()
     ssc.awaitTermination()
-  }
-
-  private def updateActivityByProductState(newItemByKey: Seq[ActivityByProduct], currentState: Option[(Long, Long, Long, Long)]) = {
-
-
-    var (previousTimeStamp, purchase_count, add_to_cart_count, page_view_count) = currentState.getOrElse(System.currentTimeMillis(), 0L, 0L, 0L)
-
-    var result: Option[(Long, Long, Long, Long)] = null
-
-    if (newItemByKey.isEmpty) {
-      if (System.currentTimeMillis() - previousTimeStamp > 30000 + 4000) {
-        result = None
-      } else {
-        result = Some((previousTimeStamp, purchase_count, add_to_cart_count, page_view_count))
-      }
-    } else {
-      newItemByKey.foreach(a => {
-        purchase_count += a.purchaseCount
-        add_to_cart_count += a.addToCardCount
-        page_view_count += a.pageViewCount
-      })
-      result = Some((System.currentTimeMillis(), purchase_count, add_to_cart_count, page_view_count))
-    }
-    result
-
   }
 }

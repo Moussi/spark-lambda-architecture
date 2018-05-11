@@ -77,7 +77,7 @@ object HDFSBatchJob {
     activityByProduct.write.partitionBy("timestamp_hour").mode(SaveMode.Append).parquet("hdfs://localhost:9000/lambda/batch1")
 
     /**
-      * Now we need to make a fat jar an run this fat in jar in yarn using spark-submit
+      * Now we need to make a fat jar and run it into yarn cluster manager using spark-submit
       * mvn clean package
       * copy fat jar into shared folder with VM machine
       * connect ssh to VM
