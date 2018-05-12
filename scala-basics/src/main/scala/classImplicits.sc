@@ -19,7 +19,7 @@ implicit class StringUtils(myString:String){
 implicit class IdIdentifier(person:Student){
 
   def getId() = {
-    person
+    person.id
   }
 }
 

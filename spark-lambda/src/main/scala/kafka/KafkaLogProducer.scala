@@ -39,6 +39,9 @@ object KafkaLogProducer extends App{
   val kafkaProducer:Producer[Nothing, String] = new KafkaProducer[Nothing, String](props)
 
   for (fileCount <- 1 to config.filesNumber) {
+
+    //val fw = new FileWriter(filePath, true)
+
     // introduce some randomness to time increments for demo purposes
     val incrementTimeEvery = rnd.nextInt(config.records - 1) + 1
 
@@ -63,10 +66,9 @@ object KafkaLogProducer extends App{
       val product = Products(rnd.nextInt(Products.length - 1))
 
       val line = s"$adjustedTimestamp\t$referrer\t$action\t$prevPage\t$visitor\t$page\t$product\n"
-
       val producerRecord = new ProducerRecord(topic, line)
-
       kafkaProducer.send(producerRecord)
+      //fw.write(line)
 
       if (iteration % incrementTimeEvery == 0) {
         println(s"Sent $iteration messages!")
@@ -76,6 +78,10 @@ object KafkaLogProducer extends App{
       }
 
     }
-    kafkaProducer.close()
+
+    val sleeping = 2000
+    println(s"Sleeping for $sleeping ms")
   }
+
+  kafkaProducer.close()
 }
