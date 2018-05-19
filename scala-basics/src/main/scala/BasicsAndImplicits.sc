@@ -10,5 +10,5 @@ println(sayHello("moussi") { () => "FOulen" } )
 println(sayHello2("moussi"))
 
 val list = List(List("Aymen"), List("Moussi"))
-val flattenList = list.flatMap(_)
+val flattenList = list.flatten
 println(flattenList)
