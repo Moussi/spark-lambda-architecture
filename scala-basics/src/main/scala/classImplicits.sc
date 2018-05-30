@@ -2,7 +2,7 @@ abstract class Person(name:String, surname:String)
 
 case class Student(name : String, surname : String , id:Int) extends Person(name, surname)
 
-implicit class StringUtils(myString:String){
+implicit class StringWrapper(myString:String){
 
   def wordCount() = {
     val splited = myString.split("\\s+")
