@@ -46,7 +46,7 @@ object AdvancedStreamingJob {
         */
       val activityDStream = textDstream.transform(rdd =>
         rdd.flatMap { line =>
-          buildActivityFromLine(line)
+            functions.buildActivityFromLine(line)
         }
       )
 

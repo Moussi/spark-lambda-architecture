@@ -25,7 +25,7 @@ object SparkUtils {
     var checkPointDirectory = "hdfs://lambda-pluralsight:9000/spark/checkpoint"
     if (config.local_deploy_mode) {
       conf.setMaster("local[*]")
-      checkPointDirectory = "file:///home/moussi/Desktop/Projects/LamdaArchitecture/Boxes/spark-kafka-cassandra-applying-lambda-architecture/vagrant/lambda"
+      checkPointDirectory = "file:///home/amoussi/Desktop/projetcs/cassandra"
     }
 
     /**

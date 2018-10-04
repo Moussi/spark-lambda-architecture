@@ -5,6 +5,7 @@
 import com.twitter.algebird.{HLL, HyperLogLogMonoid}
 import domain._
 import org.apache.spark.streaming.State
+import org.joda.time.LocalDate
 
 package object functions {
 
@@ -55,6 +56,19 @@ package object functions {
     if (record.length == 7)
       Some(Activity(record(0).toLong / MS_IN_HOUR * MS_IN_HOUR, record(1),
         record(2), record(3), record(4), record(5), record(6)))
+    else
+      None
+  }
+
+  def buildAudienceFromLine(line:String): Option[AudiencePoi] = {
+    val record = line.split("\\t")
+    println(line)
+    val day = LocalDate.parse(record(0)).dayOfMonth()
+    val month = LocalDate.parse(record(0)).monthOfYear()
+    val year = LocalDate.parse(record(0)).year()
+    None
+    if (record.length == 7)
+      Some(AudiencePoi(nb = record(0), poi_id = record(1)))
     else
       None
   }
